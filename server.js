@@ -14,11 +14,13 @@ const routeMasterRoutes = require('./routes/routeMasters');
 const servicesRoutes = require('./routes/services');
 const reservationRoutes = require('./routes/reservations');
 const seatRoutes = require('./routes/seats');
+const busLayoutRoutes = require('./routes/busLayoutRoutes');
 app.use('/api/seats', seatRoutes);
 
 app.use('/api/route-masters', routeMasterRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/reservations', reservationRoutes);
+app.use('/api/bus-layouts', busLayoutRoutes);
 
 app.get('/', (req, res) => res.json({ ok: true, message: 'Transporte Centinela API' }));
 

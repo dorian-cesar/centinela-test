@@ -35,6 +35,8 @@ exports.getServicesByFilter =async (req, res) => {
   try {
     const { date, direction, origin, destination } = req.query;
 
+    console.log(req.query);
+
     if (!date || !direction || !origin || !destination) {
       return res.status(400).json({ message: 'Faltan parámetros obligatorios' });
     }
