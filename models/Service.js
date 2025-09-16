@@ -4,6 +4,7 @@ const departureSchema = new mongoose.Schema({
   order: { type: Number, required: true },
   stop: { type: String, required: true },
   time: { type: Date, required: true },
+  price: { type: Number, required: true }
   
 }, { _id: false });
 

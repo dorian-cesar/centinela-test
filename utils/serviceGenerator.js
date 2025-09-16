@@ -12,9 +12,18 @@ dayjs.extend(isoWeek);
 const TZ = 'America/Santiago';
 const HORIZON_DAYS = 14;
 
+
+
 // Genera servicios a partir de una ruta maestra
 async function generateServicesForRoute(route, startDate, daysOfWeek) {
-  const start = dayjs.tz(startDate, TZ).startOf('day');
+ // const start = dayjs.tz(startDate, TZ).startOf('day');
+
+  // Paso 1: Interpretar fecha en la zona horaria Chile
+const localStart = dayjs.tz(startDate, TZ).startOf('day');
+
+// Paso 2: Convertir a UTC
+const start = localStart.utc();
+ 
   const createdServices = [];
 
   for (let i = 0; i < HORIZON_DAYS; i++) {
@@ -32,11 +41,12 @@ async function generateServicesForRoute(route, startDate, daysOfWeek) {
 
 async function createServiceInstance(route, date, direction) {
   // hora base de salida en Santiago
-  const baseDeparture = dayjs.tz(date, TZ)
-    .hour(route.departureHour || 8)
-    .minute(route.departureMinute || 0)
-    .second(0)
-    .millisecond(0);
+  const [hour, minute] = route.baseDepartureTime.split(':').map(Number);
+const baseDeparture = dayjs(date)
+  .hour(hour)
+  .minute(minute)
+  .second(0)
+  .millisecond(0);
 
   // paradas (se puede invertir si quieres, pero origin/destination siempre fijos)
   const stops = route.stops;
@@ -51,6 +61,7 @@ async function createServiceInstance(route, date, direction) {
       order: stop.order,
       stop: stop.name,
       time: stopTime.toDate(), // Mongo guarda en UTC
+      price: stop.price // <-- Agregar el precio aquí
     });
   }
 
