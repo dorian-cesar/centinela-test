@@ -3,6 +3,14 @@ const RouteMaster = require('../models/RouteMaster');
 const Seat = require('../models/Seat');
 const { generateServicesForRoute } = require('../utils/serviceGenerator');
 
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const tz = require('dayjs/plugin/timezone');
+dayjs.extend(utc);
+dayjs.extend(tz);
+const TZ ='America/Santiago';
+
+
 exports.generateServices = async (req, res) => {
   try {
     const { routeMasterId, startDate, daysOfWeek } = req.body;
@@ -42,11 +50,10 @@ exports.getServicesByFilter =async (req, res) => {
     }
 
     // Convertir date a rango de día completo
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
+    const start = dayjs.tz(date, TZ).startOf('day').toDate(); // UTC equivalente a 00:00 Chile
+    const end   = dayjs.tz(date, TZ).endOf('day').toDate(); 
 
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
+    console.log({ startISO: start.toISOString(), endISO: end.toISOString() });
 
     const services = await Service.find({
       date: { $gte: start, $lte: end },
