@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
 
 const departureSchema = new mongoose.Schema({
+  order: { type: Number, required: true },
   stop: { type: String, required: true },
-  time: { type: Date, required: true }
+  time: { type: Date, required: true },
+  
 }, { _id: false });
 
 const serviceSchema = new mongoose.Schema({

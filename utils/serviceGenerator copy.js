@@ -1,28 +1,29 @@
 const Service = require('../models/Service');
 const Seat = require('../models/Seat');
 const dayjs = require('dayjs');
-const utc = require('dayjs/plugin/utc');
-const timezone = require('dayjs/plugin/timezone');
 const isoWeek = require('dayjs/plugin/isoWeek');
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 dayjs.extend(isoWeek);
 
-const TZ = 'America/Santiago';
+
+
+// Genera servicios a partir de una ruta maestra
+// horizon fijo de 14 días
 const HORIZON_DAYS = 14;
 
 // Genera servicios a partir de una ruta maestra
 async function generateServicesForRoute(route, startDate, daysOfWeek) {
-  const start = dayjs.tz(startDate, TZ).startOf('day');
+  const start = dayjs(startDate).startOf('day');
   const createdServices = [];
 
   for (let i = 0; i < HORIZON_DAYS; i++) {
     const currentDate = start.add(i, 'day');
+
+    // día de la semana (1=lunes ... 7=domingo)
     const dayOfWeek = currentDate.isoWeekday();
 
     if (!daysOfWeek.includes(dayOfWeek)) continue;
 
+    // Usar la dirección que ya está en la ruta maestra
     const service = await createServiceInstance(route, currentDate, route.direction);
     createdServices.push(service);
   }
@@ -30,35 +31,34 @@ async function generateServicesForRoute(route, startDate, daysOfWeek) {
   return createdServices;
 }
 
+
 async function createServiceInstance(route, date, direction) {
-  // hora base de salida en Santiago
-  const baseDeparture = dayjs.tz(date, TZ)
+  // hora base de salida
+  const baseDeparture = dayjs(date)
     .hour(route.departureHour || 8)
     .minute(route.departureMinute || 0)
     .second(0)
     .millisecond(0);
 
-  // paradas (se puede invertir si quieres, pero origin/destination siempre fijos)
-  const stops = route.stops;
+  // paradas (se puede invertir si lo deseas según direction)
+  const stops = route.stops; 
 
   let departureTimes = [];
 
   for (let stop of stops) {
-    // sumar offset acumulado
     const stopTime = baseDeparture.add(stop.offsetMinutes || 0, 'minute');
-
     departureTimes.push({
       order: stop.order,
       stop: stop.name,
-      time: stopTime.toDate(), // Mongo guarda en UTC
+      time: stopTime.toDate(),
     });
   }
 
   const service = new Service({
     routeMaster: route._id,
-    date: baseDeparture.toDate(), // fecha de inicio del servicio
+    date: date.toDate(),
     direction,
-    origin: route.origin,
+    origin: route.origin,         // SIEMPRE lo de la ruta maestra
     destination: route.destination,
     layout: route.layout,
     departures: departureTimes,
