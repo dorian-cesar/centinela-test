@@ -1,20 +1,28 @@
 const Seat = require('../models/Seat');
+const Service = require('../models/Service');
 
 // RESERVAR asiento (hold temporal)
 async function reserveSeat(req, res) {
   try {
     const { serviceId, seatCode, passengerName, passengerId, origin, destination } = req.body;
 
-    if (!serviceId || !seatCode || !passengerName || !passengerId || !origin || !destination) {
+    if (!serviceId || !seatCode || !passengerName || !passengerId || !origin) {
       return res.status(400).json({ message: 'Faltan datos obligatorios' });
     }
 
-    const seat = await Seat.findOne({ service: serviceId, code: seatCode });
+    const [seat, service] = await Promise.all([Seat.findOne({ service: serviceId, code: seatCode }),
+    Service.findById(serviceId)]);
     if (!seat) return res.status(404).json({ message: 'Asiento no encontrado' });
+    if (!service) return res.status(404).json({ message: 'Servicio no encontrado' });
 
     const now = new Date();
     if (!seat.isAvailable || (seat.holdUntil && seat.holdUntil > now)) {
       return res.status(400).json({ message: 'Asiento no disponible' });
+    }
+
+    let destStopName = destination;
+    if (service.direction === 'subida') {
+      destStopName = service.destination;
     }
 
     seat.isAvailable = false;
@@ -23,12 +31,13 @@ async function reserveSeat(req, res) {
 
     await seat.save();
 
-    res.status(201).json({ message: `Asiento ${seat.code} reservado temporalmente`, seat });
+    res.status(201).json({ message: `Asiento ${seat.code} reservado temporalmente desde ${origin} hasta ${destStopName}`, seat });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error al reservar asiento' });
   }
 }
+
 
 // CONFIRMAR asiento (ocupado hasta destino)
 async function confirmSeat(req, res) {

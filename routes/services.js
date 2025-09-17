@@ -10,6 +10,7 @@ router.get('/', serviceController.getServices);
 
 // NUEVO endpoint para filtrar servicios
 router.get('/filter', serviceController.getServicesByFilter);
+router.get('/:id', serviceController.getServicesByID);
 
 
 module.exports = router;
